@@ -18,3 +18,4 @@ The main purpose of the docker is to package and containerized applications and 
 7. **docker images** : To see list of all available images and their size.
 8. **docker rmi** : To remove the available image. Always make sure that no container is running of that image. You must stop and delete all dependent containers to be able to delete an image.
 9. **docker pull <img_name>** : Just to pull the image, but not run the container.
+10. **docker attach <container_id>** : To attach the container running in background to foreground.
