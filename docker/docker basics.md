@@ -44,3 +44,68 @@ To make it available to public docker hub repository, run the docker push comman
     ENTRYPOINT -> specify entrypoint that allows us to specify a command that will be run when the image is run as a container.
 
 **IMP**: When docker builds the image, it builds these in a layered archiecture. Each line of instruction creates a new layer in the docker image which (just) changes in the previous layer. If any steps fails then it will reuse the previous layers from cache and continue to build the remaining layers.
+
+**Creating a new Docker Image**
+
+1. Demo:
+
+    **vim index.html** 
+
+        <!DOCTYPE html>
+            <html>
+                    <head>
+                            <meta charset="UTF-8" />
+                            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                            <link rel="icon" href="./logo.jpg" type="image/x-icon" />
+                            <title> Typing Animation </title>
+                            <link rel="stylesheet" href="./src/index.css" />
+                    </head>
+
+                    <body>
+                            <div class="container">
+                                    <div class="title"> Hey, I am Priyanka Salunke </div>
+                                    <div class="subtitle">
+                                            <div class="text1"> I am a Developer! </div>
+                                    </div>
+                            </div>
+
+                            <!-- Javascript link -->
+                            <script src="./src/index.js"></script>
+                    </body>
+            </html>
+
+    You can see the output using -> **lynx index.html**  (Run code on ubuntu terminal-browser called lynx)
+
+**Steps to run this application on localhost:**
+1. install apache server -> sudo apt install apache2
+2. Start the apache service -> sudo service apache2 start
+3. Move the index.html to /var/www/html directory -> sudo mv index.html /var/www/html
+4. start the apache service again -> sudo service apache2 start
+5. Open the browser and start the app -> http://172.17.0.2/index.html
+
+Now, let's dockerized this applciation
+1. Write down all above commands on the notepad
+2. Create a Directory and create a Dockerfile
+
+        FROM ubuntu
+
+        RUN apt-get update
+        RUN apt install -y apache2
+        RUN service apache2 start
+
+        COPY index.html /var/www/html
+        ENTRYPOINT service apache2 start
+        
+3. Build the image using -> docker build . -t my-web-app
+-t is used to give the name/tag to an image
+
+4. Now, if you do "docker images", you can see my-web-app appeared there. You can run it using "docker run web-app"
+
+5. To push it to docker repository, we can use the command "docker push web-app".
+
+6. If you are doing first time, then we need to tag the image with our username. So, build the image again -> "docker build . -t priyankass99/my-web-app"
+
+7. Then do "docker push priyankass99/my-web-app"
+
+Now, you can login to docker hub and check your repository with new image!
