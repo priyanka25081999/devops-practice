@@ -109,3 +109,8 @@ Now, let's dockerized this applciation
 7. Then do "docker push priyankass99/my-web-app"
 
 Now, you can login to docker hub and check your repository with new image!
+
+**Environment variables in Docker:**
+
+1. docker run -e APP_COLOR=blue web-app --> so it will apply blue color to the web application. In the code, we need to add color = os.environ.get("APP_COLOR")
+2. You can find list of set environment variables in config section of docker inspect command
