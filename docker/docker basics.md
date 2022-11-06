@@ -114,3 +114,14 @@ Now, you can login to docker hub and check your repository with new image!
 
 1. docker run -e APP_COLOR=blue web-app --> so it will apply blue color to the web application. In the code, we need to add color = os.environ.get("APP_COLOR")
 2. You can find list of set environment variables in config section of docker inspect command
+
+**command vs entrypoint:**
+1. When you run ubuntu image, it will start and stop immediatly. Why? Bcz unline VM, docker containers are not meant to host an operating system (OS). Containers are meant to run a specific task or a process such as to host an instance of a web server or application server or a database or simply to carry out some kind of computation or analysis. Once the task is complete the container exits, the container only lives as long as the process inside it is alive. If the web service inside the container is stopped or crashes, then the container exits. 
+2. If we see the dockerfile of any application then the "cmd" which stands for command that defines, the program that will be run within the container when it's starts. For the nginx image, it is the nginx command, for the mysql image, it is the mysql command. By default it uses bash. Bash is not a db server or a web server. It is a shell that listens for inputs from a terminal and if it cannot find a terminal, then it exits. If you want your container sleeps for 5sec when it started always, then just add "cmd sleep 5" in the Dockerfile.
+3. But what if we want to specify the seconds (above we added 5secs) to the command runtime, like docker run ubuntu sleep 10. There is where entrypoints comes into the picture
+4. The entrypoint instructions is like the command instruction and whenever you specify anything from the terminal then it will get appended to the entrypoint like ENTRYPOINT ["sleep"] - add this line in the docketfile and then sleep will be replaced with 10 if we pass 10 (sec) from the terminal.
+5. But now, what if the you don't specify the 10 or any seconds from the terminal, then it will throw an error as the program was expecting some values. So, in that case, we always use command and ENTRYPOINT together. You can specify the default value. So, in the case where you do not specify the input from terminal, then the entrypoint will be appended to the command instruction. i.e 
+FROM Ubuntu
+ENTRYPOINT ["sleep"]
+CMD ["5"]
+So, this both will be appended as: docker run ubuntu sleep 5
