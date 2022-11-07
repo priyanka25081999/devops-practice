@@ -125,3 +125,42 @@ FROM Ubuntu
 ENTRYPOINT ["sleep"]
 CMD ["5"]
 So, this both will be appended as: docker run ubuntu sleep 5
+
+**Docker compose:**
+1. With docker compose, we can create configuration file in YAML format (called docker-compose.yaml) and put different services together to running them in this file.
+2. Then we can simply run "docker compose up" command to bring up the entire application stack. 
+3. This is easier to maintain, implement and run as all changes are always stored in the docker compose configuration file. But, this is all applicable to running containers on a single docker host.
+	a. **--link** option -> link is a command line option which can be used to link two containers together
+		Example: docker run -d --name=vote -p 5000:80 --link redis:redis voting-app
+		Here, redis is the service name followed by colon and name of the host that the voting app is looking for. So, internally it creates an entry in the /etc/hosts file on the voting-app container, it adds an entry with redis with the internal IP of redis container.
+	b. We can also do "docker run -d --name=vote -p 5000:80 --link redis:redis --link db:db voting-app", but this will soon to be removed from docker as docker swarm and other networking options provides better way of achieving this
+
+4. Now, let's start creating a docker-compose.yml file:
+	a. first we will add container names as key in the yml file and then add name of the image as it's value (key is the image and value is the name of that image to use). If we have used ports to expose for any container then add it under the respective containers. Also, add links. Whichever container requires the link, create a property under it called links and provides an array of links such as redis, db (see above example).
+5. Instead of pulling an existing image from the docker registery, we can also build our own image by adding build command in the docker compose.
+6. Docker compose versions are important to understand. Currently the latest version is 3.
+7. Best example : https://github.com/dockersamples/example-voting-app
+8. Note: We need to install docker compose separately
+9. Example of docker-compose.yml file (older version-1)
+		redis:
+		  image: redis
+		db:
+		  image: postgres:9.4
+
+		vote:
+		  image: voting-app
+		  ports:
+			- 5000:80
+		  links:
+			- redis
+		worker:
+		  image: worker-app
+		  links:
+			- db
+
+		result:
+		  image: result-app
+		  ports:
+			- 5001:80
+		  links:
+			- db
