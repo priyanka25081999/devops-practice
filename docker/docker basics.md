@@ -164,3 +164,28 @@ So, this both will be appended as: docker run ubuntu sleep 5
 			- 5001:80
 		  links:
 			- db
+10. The newer versions of docker-compose establishes the default network, so we do not require to add links option in the services. But we need to add version section in the compose file. 
+
+    Example of docker-compose.yml file (newer version-3)
+
+		version: "3"
+		services:
+			redis:
+			  image: redis
+
+			db:
+			  image: postgres:9.4
+
+			vote:
+			  image: voting-app
+			  ports:
+				- 5000:80
+
+			worker:
+			  image: worker-app
+
+			result:
+			  image: result-app
+			  ports:
+				- 5001:80
+
