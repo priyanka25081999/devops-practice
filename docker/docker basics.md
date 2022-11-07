@@ -189,3 +189,15 @@ So, this both will be appended as: docker run ubuntu sleep 5
 			  ports:
 				- 5001:80
 
+
+**Docker registry:**
+1. It is a central repository of all docker images. The image name can be given as nginx/nginx or kodekloud/click-counter-app. First name is the user account or the orgnization name and the second name is the repository name. If we didn't specify username then docker assumes it as the same as repository/image name. Also, it is by default assumed that all images are stored and pulled from the docker's default register - docker hub. The DNS for this is docker.io, i.e docker.io/kodekloud/click-counter-app or docker.io/nginx/nginx
+2. We can also publish an image privately. Many cloud service providers such as GCP, AWS, Azure provide a private registry by default when we open an account with them. 
+3. We can also deploy the private registry locally using registry image. And then we can access that image and also push the new image anytime within this network using either localhost if you are on same host or using an IP address if you are on different hosts in that environment. By default docker engine interacts with docker hub. DockerHub is a hosted registry solution by Docker Inc.
+4. Example to push on the private local registry:
+
+		$ docker pull nginx:latest
+		$ docker image tag nginx:latest localhost:5000/nginx:latest
+		$ docker push localhost:5000/nginx:latest
+
+	This will add images to our local private registry. In case, if we want to pull the nginx image on accidental deletion, then we can pull it from our local registry using "docker pull localhost:5000/nginx:latest" command.
