@@ -202,7 +202,7 @@ So, this both will be appended as: docker run ubuntu sleep 5
 
 	This will add images to our local private registry. In case, if we want to pull the nginx image on accidental deletion, then we can pull it from our local registry using "docker pull localhost:5000/nginx:latest" command.
 
-**docker engine:**
+**Docker engine:**
 1. When we install a docker on linux host, it will install 3 different components: a. Docker CLI b. REST API c. Docker Daemon
 
 	a. **Docker Daemon** : It is the background process that manages the docker objects such as the images, containers, volumes and networks.
@@ -231,7 +231,7 @@ So, this both will be appended as: docker run ubuntu sleep 5
 		b. docker run --memory=100m ubuntu
 		This will ensure that the container does not take up more than 100megabytes of the host memory at any given time.
 
-**docker storage:**
+**Docker storage:**
 1. When we install a docker on our host, it will create a folder structure as /var/lib/docker and there will be multiple folders inside it and this is where docker stores all the data (files related to image and containers running on docker host) by default.
 2. Docker's layered architecture: When docker builds images, it builds these in a layered architecture. Each line of instruction in the docker file creates a new layer in the docker image with just few changes from the previous layer. If the 2 docker files containes same layers then docker does not re-build those layers instead it takes those from cache and build only new layers. This is also applicable when you update the application code. This way docker build images faster and efficiently save the disk space. These are all image layers and all are read-only. To write it, we need to re-build the image. The same image layer is shared by all containers created using this image.
 
@@ -244,7 +244,7 @@ So, this both will be appended as: docker run ubuntu sleep 5
 6. **Storage drivers:** These are responsible to do all of these storage related activities. Docker uses stoarge drivers to enable the layered architecture. Some commonly used drivers are AUFS, ZFS, BTRFS, overlay, overlay2 etc. The selection of the driver depends upon the underlying OS. For the ubuntu, the default storage driver is AUFS.
 7. **Example:** docker run -d --name mysql-db -e MYSQL_ROOT_PASSWORD=db_pass123 -v /opt/data:/var/lib/mysql mysql
 
-**docker networking:**
+**Docker networking:**
 1. When we install docker on our host, it will install 3 networks automatically: bridge, none and host. Bridge is the default network a container gets attached to. If we want to change the network of the container, then we can specify the --network parameter in the docker run command. 
 
 	Example:
