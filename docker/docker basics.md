@@ -264,3 +264,10 @@ So, this both will be appended as: docker run ubuntu sleep 5
 
 		d. docker run --name alpine-2 --network=none alpine - To attach a new network to the container
 
+**Docker on Windows - References:**
+
+* Docker on Windows Documentation: https://docs.docker.com/docker-for-windows/
+
+* Docker For Windows Download: https://www.docker.com/docker-windows
+
+* Docker Toolbox Download: https://www.docker.com/products/docker-toolbox
