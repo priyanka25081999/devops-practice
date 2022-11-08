@@ -116,7 +116,7 @@ Now, you can login to docker hub and check your repository with new image!
 2. You can find list of set environment variables in config section of docker inspect command
 
 **command vs entrypoint:**
-1. When you run ubuntu image, it will start and stop immediatly. Why? Bcz unline VM, docker containers are not meant to host an operating system (OS). Containers are meant to run a specific task or a process such as to host an instance of a web server or application server or a database or simply to carry out some kind of computation or analysis. Once the task is complete the container exits, the container only lives as long as the process inside it is alive. If the web service inside the container is stopped or crashes, then the container exits. 
+1. When you run ubuntu image, it will start and stop immediatly. Why? Bcz unlike VM, docker containers are not meant to host an operating system (OS). Containers are meant to run a specific task or a process such as to host an instance of a web server or application server or a database or simply to carry out some kind of computation or analysis. Once the task is complete the container exits, the container only lives as long as the process inside it is alive. If the web service inside the container is stopped or crashes, then the container exits. 
 2. If we see the dockerfile of any application then the "cmd" which stands for command that defines, the program that will be run within the container when it's starts. For the nginx image, it is the nginx command, for the mysql image, it is the mysql command. By default it uses bash. Bash is not a db server or a web server. It is a shell that listens for inputs from a terminal and if it cannot find a terminal, then it exits. If you want your container sleeps for 5sec when it started always, then just add "cmd sleep 5" in the Dockerfile.
 3. But what if we want to specify the seconds (above we added 5secs) to the command runtime, like docker run ubuntu sleep 10. There is where entrypoints comes into the picture
 4. The entrypoint instructions is like the command instruction and whenever you specify anything from the terminal then it will get appended to the entrypoint like ENTRYPOINT ["sleep"] - add this line in the docketfile and then sleep will be replaced with 10 if we pass 10 (sec) from the terminal.
@@ -201,3 +201,32 @@ So, this both will be appended as: docker run ubuntu sleep 5
 		$ docker push localhost:5000/nginx:latest
 
 	This will add images to our local private registry. In case, if we want to pull the nginx image on accidental deletion, then we can pull it from our local registry using "docker pull localhost:5000/nginx:latest" command.
+
+**docker engine:**
+1. When we install a docker on linux host, it will install 3 different components: a. Docker CLI b. REST API c. Docker Daemon
+
+	a. **Docker Daemon** : It is the background process that manages the docker objects such as the images, containers, volumes and networks.
+
+	b. **Docker REST API server** : It is the API interface that can use to talk to the daemon and provide instructions. 
+
+	c. **Docker CLI** : It is the command line interface used to perform actions such as running containers, stopping containers, destroying images etc. It uses REST API to interact with the docker daemon.
+
+2. Docker uses namespace to isolate the workspace. Process ID, network, mount, interprocess communication, unix timesharing are created in their own namespace thereby providing isolation between containers.
+
+3. **Namespaces - PID:** When we create a container on the linux system then it can be treated as creating a child subsystem which conists of it's bunch of own processes orginating from root process with process id of one (init process). But two processes cannot have same process id. This is where namespaces comes into the picture. So, the container's first process always get an id-1 on that namespace but in the main system it will get a next available process id as the 1st process is always init (which has id-1).
+
+	a. Example: If you run any container and assume that there is only one process is running. Now, if you do "docker exec <container_id> ps -eaf" this will list down all the running processes inside that container. Then you will probably get process-id as 1. 
+
+	b. Now, if you check the same running process outside of the docker container ie. on the host using "ps -aef | grep <process_name>" (you can get the process name from above exec cmd's response), then you can see some different process id assigned to it. 
+
+	c. So, with namespaces we can able to give multiple process id's to the same process, thereby making a container think that it is a root process on that container. Whereas in fact it is just another process running on the underlying docker host. And containerization technology allows this process to be isloated and run inside a container using namespaces.
+
+4. Docker host as well as docker containers share the same system resources such as CPU and memory. By default there is no restriction as to how much of a resource a container can use and hence containers may end up utilizing all of the resources on the underlying host. Docker uses 3 groups to restrict the amount of hardware resources allocated to each container. This can be done using --cpus option of docker run command.
+
+	**Example:**
+		
+		a. docker run --cpus=.5 ubuntu
+		This will ensure that the container does not take up more than 50% of the host CPU at any given time. 
+		
+		b. docker run --memory=100m ubuntu
+		This will ensure that the container does not take up more than 100megabytes of the host memory at any given time.
