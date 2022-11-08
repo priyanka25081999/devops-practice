@@ -230,3 +230,37 @@ So, this both will be appended as: docker run ubuntu sleep 5
 		
 		b. docker run --memory=100m ubuntu
 		This will ensure that the container does not take up more than 100megabytes of the host memory at any given time.
+
+**docker storage:**
+1. When we install a docker on our host, it will create a folder structure as /var/lib/docker and there will be multiple folders inside it and this is where docker stores all the data (files related to image and containers running on docker host) by default.
+2. Docker's layered architecture: When docker builds images, it builds these in a layered architecture. Each line of instruction in the docker file creates a new layer in the docker image with just few changes from the previous layer. If the 2 docker files containes same layers then docker does not re-build those layers instead it takes those from cache and build only new layers. This is also applicable when you update the application code. This way docker build images faster and efficiently save the disk space. These are all image layers and all are read-only. To write it, we need to re-build the image. The same image layer is shared by all containers created using this image.
+
+	But, since we have build our main code in image layer, if we want to edit that code, then docker creates a copy of that file into the container layer (which is read and write) and then we can edit/modify those file contents but on the different version. The main copy is still available on the image layer. This mechanism is called as copy on write. 
+3. After building the image, when we run the container using docker run command, then the docker creates a container and also creates a new writable layer on top of the image layers. This layer exists as long as the container is alive. When the container is destroyed then this layer and changes stored on it are also destroyed.
+4. So, to persist the data we can create volumes using a "**docker volume create**" command. This will create a new directory called "data_volume" under the /var/lib/docker/volumes directory. Then we can mount this volume on container read-write layer using docker run -v command. Now even if the container is destroyed the data is still alive. 
+5. There are two types of mounting : a. volume mounting b. bind mounting.
+	a. **volume mount** mounts from a volumes directory on the docker host.
+	b. **bind mount** mounts a directory from any location on the docker host.
+6. **Storage drivers:** These are responsible to do all of these storage related activities. Docker uses stoarge drivers to enable the layered architecture. Some commonly used drivers are AUFS, ZFS, BTRFS, overlay, overlay2 etc. The selection of the driver depends upon the underlying OS. For the ubuntu, the default storage driver is AUFS.
+7. **Example:** docker run -d --name mysql-db -e MYSQL_ROOT_PASSWORD=db_pass123 -v /opt/data:/var/lib/mysql mysql
+
+**docker networking:**
+1. When we install docker on our host, it will install 3 networks automatically: bridge, none and host. Bridge is the default network a container gets attached to. If we want to change the network of the container, then we can specify the --network parameter in the docker run command. 
+
+	Example:
+		docker run ubuntu --network=host
+		docker run ubuntu --network=none
+
+2. **Bridge network** - It is the private internal network created by docker on the docker host. This is the default network type and containers who are attacted to it gets an internal IP address betweeen the range 127.17 series. Containers can then access each other using the internal IP address. To access the host outside of this network then we can do port mapping. By default docker only creates one internal bridge network.
+3. **None network** - Here, the container doesn't attach to any network and doesn't have access to the outside world. They run in an isolated network.
+4. **Host network** - It is a networking mode in which a Docker container shares its network namespace with the host machine.
+5. Built in DNS server runs at 127.0.0.11 IP address. Docker uses network namespaces that creates a separate namespaces for each container.Then, it uses virtual ethernet pairs to connect containers together.
+
+		a. docker network ls - To get information about current available network on the setup
+
+		b. docker network inspect <network_name> - To get information about the specific network attached to the container
+
+		c. docker network create --driver bridge --subnet 182.18.0.1/24 --gateway 182.18.0.1 wp-mysql-network - To create a new network 
+
+		d. docker run --name alpine-2 --network=none alpine - To attach a new network to the container
+
