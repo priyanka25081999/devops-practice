@@ -1,0 +1,77 @@
+Kuberenetes assignments:
+
+priyankasalunke:~/k8s-assignments$ kubectl get ns
+NAME                   STATUS   AGE
+default                Active   44h
+kube-node-lease        Active   44h
+kube-public            Active   44h
+kube-system            Active   44h
+kubernetes-dashboard   Active   44h
+priyankasalunke:~/k8s-assignments$ 
+priyankasalunke:~/k8s-assignments$ kubectl create ns velotio-priyanka
+namespace/velotio-priyanka created
+priyankasalunke:~/k8s-assignments$ 
+priyankasalunke:~/k8s-assignments$ kubectl get ns
+NAME                   STATUS   AGE
+default                Active   44h
+kube-node-lease        Active   44h
+kube-public            Active   44h
+kube-system            Active   44h
+kubernetes-dashboard   Active   44h
+velotio-priyanka       Active   41s
+priyankasalunke:~/k8s-assignments$ kubectl config set-context $(kubectl config current-context) --namespace=velotio-priyanka
+priyankasalunke:~/k8s-assignments$ kubectl run nginx-pod --image=nginx --port=80
+pod/nginx-pod created
+priyankasalunke:~/k8s-assignments$ kubectl get pod
+NAME                              READY   STATUS              RESTARTS      AGE
+k8s-deployment-6cbc575d99-cd9rp   1/1     Running             1 (41h ago)   44h
+nginx-ff6774dc6-mr9sg             1/1     Running             1 (41h ago)   44h
+nginx-pod                         0/1     ContainerCreating   0             5s
+priyankasalunke:~/k8s-assignments$ 
+priyankasalunke:~/k8s-assignments$ kubectl get pod
+NAME                              READY   STATUS    RESTARTS      AGE
+k8s-deployment-6cbc575d99-cd9rp   1/1     Running   1 (41h ago)   44h
+nginx-ff6774dc6-mr9sg             1/1     Running   1 (41h ago)   44h
+nginx-pod                         1/1     Running   0             14s
+priyankasalunke:~/k8s-assignments$ 
+priyankasalunke:~/k8s-assignments$ kubectl edit pod nginx-pod
+pod/nginx-pod edited
+priyankasalunke:~/k8s-assignments$ kubectl create deployment nginx-deployment --image nginx:1.7.8 --replicas=2 --port=80
+deployment.apps/nginx-deployment created
+priyankasalunke:~/k8s-assignments$ 
+priyankasalunke:~/k8s-assignments$ kubectl get deployments
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+k8s-deployment     1/1     1            1           44h
+nginx              1/1     1            1           45h
+nginx-deployment   0/2     2            0           6s
+priyankasalunke:~/k8s-assignments$ kubectl rollout status deployment/nginx-deployment
+priyankasalunke:~/k8s-assignments$ kubectl create configmap velotio-cm --from-literal=env1=value1
+configmap/velotio-cm created
+priyankasalunke:~/k8s-assignments$  cat deployment-def.yaml
+piVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-cm
+  labels:
+    name: busybox-cm-name
+spec:
+  selector:
+    matchLabels:
+     name: busybox-cm-name
+  template:
+   metadata:
+    labels:
+     name: busybox-cm-name
+   spec:
+     containers:
+       - name: busybox-container
+         image: busybox
+         env:
+          - name: key1
+            valueFrom:
+              configMapKeyRef:
+                 name: velotio-cm
+                 key: key1
+priyankasalunke:~/k8s-assignments$ kubectl create -f deployment-def.yaml 
+deployment.apps/busybox-cm created
+priyankasalunke:~/k8s-assignments$ 
