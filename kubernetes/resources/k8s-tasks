@@ -75,3 +75,285 @@ spec:
 priyankasalunke:~/k8s-assignments$ kubectl create -f deployment-def.yaml 
 deployment.apps/busybox-cm created
 priyankasalunke:~/k8s-assignments$ 
+
+
+1. Create a Persistent Volume called log-volume. It should make use of a storage class name manual. It should use RWX as the access mode and have a size of 1Gi. The volume should use the hostPath /opt/volume/nginx
+
+Next, create a PVC called log-claim requesting a minimum of 200Mi of storage. This PVC should bind to log-volume.
+
+Mount this in a pod called logger at the location /var/www/nginx. This pod should use the image nginx:alpine.
+
+--->
+
+pv-def.yaml
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: log-volume
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: manual
+  hostPath:
+    path: /opt/volume/nginx
+  capacity:
+    storage: 1Gi
+	
+pvc-def.yaml
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: log-claim
+spec:
+  resources:
+    requests:
+      storage: 200Mi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: manual
+  
+ vi pod-def.yaml
+ 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: logger
+spec:
+  containers:
+  - name: logger-container
+    image: nginx:alpine
+    volumeMounts:
+    - mountPath: /var/www/nginx
+      name: log-volume
+  volumes:
+  - name: log-volume
+    persistentVolumeClaim:
+      claimName: log-claim
+	  
+2. Create a redis deployment with the following parameters:
+Name of the deployment should be redis using the redis:alpine image. It should have exactly 1 replica.
+The container should request for .2 CPU. It should use the label app=redis.
+It should mount exactly 2 volumes.
+
+a. An Empty directory volume called data at path /redis-master-data.
+b. A configmap volume called redis-config at path /redis-master.
+c. The container should expose the port 6379.
+The configmap has already been created.
+
+	apiVersion: apps/v1
+	kind: Deployment
+	metadata:
+	  name: redis
+	  labels:
+		app: redis
+	spec:
+	  replicas: 1
+	  selector:
+		matchLabels:
+		  app: redis
+	  template:
+		metadata:
+		  labels:
+			app: redis
+		spec:
+		  volumes:
+		  - name: data
+			emptyDir: {}
+		  - name: redis-config
+			configMap:
+			  name: redis-config
+		  containers:
+		  - name: redis
+			image: redis:alpine
+			resources:
+			  requests:
+				cpu: "0.2"
+			volumeMounts:
+			- name: data
+			  mountPath: /redis-master-data
+			- name: redis-config
+			  mountPath: /redis-master
+			ports:
+			- containerPort: 6379
+			
+3. Create a new deployment called nginx-deploy, with one single container called nginx, image nginx:1.16 and 4 replicas. The deployment should use RollingUpdate strategy with maxSurge=1, and maxUnavailable=2.
+Next upgrade the deployment to version 1.17.
+Finally, once all pods are updated, undo the update and go back to the previous version.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deploy
+  labels:
+        app: nginx-deploy
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: nginx-deploy
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 2
+  template:
+    metadata:
+      labels:
+        app: nginx-deploy
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.16
+		
+last step to update the image: $ k set image deployment nginx-deploy nginx=nginx:1.17
+
+Create secrets
+priyankasalunke:~$ kubectl create secret generic velotio-secret --from-literal=username=velotiotech --from-literal=password=Test123
+secret/velotio-secret created
+priyankasalunke:~$ kubectl get secrets
+NAME             TYPE     DATA   AGE
+velotio-secret   Opaque   2      35s
+priyankasalunke:~$ 
+
+
+10. Create a deployment "busybox-secret" with secrets mounted in such a way that two environment variable is exposed "USERNAME" as "velotiotech" and "PASSWORD" as "Test123"
+
+a. pod-def.yaml file:
+
+	apiVersion: v1
+	kind: Pod
+	metadata:
+	  name: busybox-pod
+	  labels:
+		app: busybox-secret
+	spec:
+	  containers:
+	  - name: busybox-container
+		image: busybox
+		env:
+		 - name: USERNAME
+		   valueFrom:
+			 secretKeyRef:
+			   name: velotio-secret
+			   key: username
+		 - name: PASSWORD
+		   valueFrom:
+			 secretKeyRef:
+			   name: velotio-secret
+			   key: password
+
+b. deployment-def.yaml
+
+	apiVersion: apps/v1
+	kind: Deployment
+	metadata:
+	  name: busybox-secret
+	  labels:
+		app: busybox-secret-label
+	spec:
+	  replicas: 1
+	  selector:
+		matchLabels:
+		  name: busybox-secret-label
+	  template:
+		metadata:
+		  labels:
+			name: busybox-secret-label
+		spec:
+		  containers:
+		  - name: busybox-container
+			image: busybox
+
+11. Create a job "velotio-job" with image busybox that executes the command "echo hello; sleep 30; echo world". Make it run 5 times, one after other.
+
+job-def.yaml file
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: velotio-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: busybox-container-job
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args: ["echo hello; sleep 30; echo world"]
+      restartPolicy: Never
+
+create a job
+$ kubectl create -f job-def.yaml
+
+check the pod status and logs
+priyankasalunke:~$ kubectl get pod
+velotio-job-vctnk                  0/1     Completed                    0                38s
+priyankasalunke:~$ kubectl logs velotio-job-vctnk
+hello
+world
+priyankasalunke:~$
+
+
+12. Create a cronjob "velotio-cronjob" with image busybox that runs on a schedule of "*/2 * * * *" and writes "date; echo Hello world" to the logs.
+
+cronjob-def.yaml
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: velotio-cronjob
+spec:
+  schedule: "*/2 * * * *"
+  jobTemplate:
+    spec:
+     template:
+      spec:
+       containers:
+       - name: busybox-container
+         image: busybox
+         command: ["/bin/sh", "-c"]
+         args: ["date; echo Hello world"]
+       restartPolicy: Never
+
+Create a cronjob
+$ kubectl create -f cronjob-def.yaml
+
+priyankasalunke:~$ kubectl get cronjob
+NAME              SCHEDULE      SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+velotio-cronjob   */2 * * * *   False     0        <none>          5s
+
+priyankasalunke:~$ kubectl get pod
+velotio-cronjob-27822652-wwqvb     0/1     Completed                    0               3m16s
+priyankasalunke:~$ kubectl logs velotio-cronjob-27822652-wwqvb
+Fri Nov 25 06:52:05 UTC 2022
+Hello world
+priyankasalunke:~$ 
+
+13. Configure a security context for a busy box deployment.
+
+deployment-def.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-deployment1
+  labels:
+    app: busybox-label
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: busybox-label
+  template:
+    metadata:
+      labels:
+        name: busybox-label
+    spec:
+      containers:
+      - name: busybox-container
+        image: busybox
+      securityContext:
+        runAsUser: 1002
+
+$ kubectl create -f deployment-def.yaml
