@@ -19,3 +19,9 @@ helm status mywebapp
 helm rollback mywebapp
 helm history mywebapp
 helm status mywebapp
+
+# The best example is given here
+https://github.com/priyanka25081999/simple-go-docker-app/tree/master/k8s-deployment
+
+# Reference
+https://phoenixnap.com/kb/create-helm-chart#ftoc-heading-3
