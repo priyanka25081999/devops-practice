@@ -1,0 +1,12 @@
+apiVersion: maths.controller/v1
+kind: Arithmetic
+metadata:
+  labels:
+    app.kubernetes.io/name: arithmetic
+    app.kubernetes.io/instance: arithmetic-sample
+    app.kubernetes.io/part-of: k8s-controller-project
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: k8s-controller-project
+  name: multiplication-sample
+spec:
+  expression: "3*2"

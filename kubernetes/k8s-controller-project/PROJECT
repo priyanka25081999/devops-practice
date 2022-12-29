@@ -1,0 +1,16 @@
+domain: controller
+layout:
+- go.kubebuilder.io/v3
+projectName: k8s-controller-project
+repo: demo
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: controller
+  group: maths
+  kind: Arithmetic
+  path: demo/api/v1
+  version: v1
+version: "3"
