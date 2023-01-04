@@ -25,3 +25,11 @@ https://github.com/priyanka25081999/simple-go-docker-app/tree/master/k8s-deploym
 
 # Reference
 https://phoenixnap.com/kb/create-helm-chart#ftoc-heading-3
+https://www.youtube.com/watch?v=JHj2pCO7Wbk
+
+# Some more steps:
+1. helm create hello-world
+2. helm package hello-world
+3. helm install hello-world <tar-file> path
+4. follow the steps given in the above command
+5. then port forward the request and open it on the browser
