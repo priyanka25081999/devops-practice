@@ -10,3 +10,7 @@
     And, save the file.
     
 3. Activate the alias -> source ~/.bash_alias
+
+Example:
+$ kubectl get pods   ---- shows the pods
+$ k get pods         ---- this will also show the pods now
