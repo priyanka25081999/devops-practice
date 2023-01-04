@@ -1,0 +1,12 @@
+# Add the alias for the kubernetes
+
+1. Create a file -> ~/.bash_alias
+
+2. Add the kubernetes command aliases:
+
+    # To set permanent bash aliases change this file ~/.bash_aliases
+    alias k='kubectl'
+
+    And, save the file.
+    
+3. Activate the alias -> source ~/.bash_alias
