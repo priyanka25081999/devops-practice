@@ -1,0 +1,24 @@
+volume snapshot:
+
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: snapshot-1
+spec:
+  volumeSnapshotClassName: default-snapshot-class
+  source:
+    persistentVolumeClaimName: mysql-pv-claim
+
+pvc restore:
+
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: snapshot-1
+spec:
+  volumeSnapshotClassName: default-snapshot-class
+  source:
+    persistentVolumeClaimName: mysql-pv-claim
+
+Reference:
+Volume snapshot - https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/volume-snapshots#v1
