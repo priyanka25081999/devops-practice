@@ -20,6 +20,10 @@ helm rollback mywebapp
 helm history mywebapp
 helm status mywebapp
 
+# Uninstall
+helm uninstall mywebapp
+(Make sure to check and delete PVC's manually if any exists)
+
 # The best example is given here
 https://github.com/priyanka25081999/simple-go-docker-app/tree/master/k8s-deployment
 
