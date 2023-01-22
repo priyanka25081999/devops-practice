@@ -1,0 +1,514 @@
+1. Create a new pod with nginx image -> kubectl run nginx --image=nginx
+2. Ready column indicates -> running containers in a pod out of total containers of a pod -> in kubectl get pods command output
+3. Edit the image of running pod -> root@controlplane:~# kubectl edit pod redis
+4. To check on which node the pod is running -> 
+	a. kubectl get pods -o wide --- and check the node column
+	b. kubectl describe pod <pod-name> and check the node row
+5. you may extract the definition to a file using the below command for the pod edit:
+	a. kubectl get pod <pod-name> -o yaml > pod-definition.yaml
+6. To scale the replicasets : kubectl scale --replicas=5 replicaset new-replica-set (scale up) or kubectl scale rs new-replica-set --replicas=2 (scale down). We can use rs/replicaset in the kubectl scale command
+7. To see all k8s objects created - kubectl get all (shows all deployments, services, pods, etc)
+
+Deployment-file.yaml
+	apiVersion: apps/v1
+	kind: Deployment
+	metadata:
+	  name: httpd-frontend
+	  labels:
+		app: httpd-frontend-app
+	spec:
+	  replicas: 3
+	  selector:
+		matchLabels:
+		  name: httpd-frontend-app
+	  template:
+		metadata:
+		  labels:
+			name: httpd-frontend-app
+		spec:
+		  containers:
+			- name: httpd-frontend-container
+			  image: httpd:2.4-alpine
+8. To get the all existing namespaces - kubectl get ns
+9. Deploy a pod - kubectl run nginx-pod --image=nginx:alpine
+10. Deploy a pod using --dry-run option (Note: dry run is depreceted so use --dry-run=client)
+	$ kubectl run redis --image=redis:alpine --labels tier=db --dry-run=client
+	pod/redis created (dry run)
+11. expose a service - kubectl expose pod redis --port 6379 --name=redis-service service
+									 service/redis-service exposed (o/p)
+12. Create a deployment - kubectl create deployment --replicas=3 webapp --image=example/webapp-color
+											deployment.apps/webapp created (o/p)
+13. Create a new pod called custom-nginx using the nginx image and expose it on container port 8080 - kubectl run custom-nginx --image=nginx --port=8080
+14. create a new namespace called dev-ns : kubectl create ns dev-ns
+15. Create a new deployment called redis-deploy in the dev-ns namespace with the redis image. It should have 2 replicas. Use imperative commands - kubectl create deployment --namespace=dev-ns --replicas=2 --image=redis redis-deploy
+16. Create a pod called httpd using the image httpd:alpine in the default namespace. Next, create a service of type ClusterIP by the same name (httpd). The target port for the service should be 80 - kubectl run httpd --image=httpd:alpine --port=80 --expose
+17. Create a pod with the given specifications. By default it displays a blue background. Set the given command line arguments to change it to green.
+
+	apiVersion: v1
+	kind: Pod
+	metadata:
+	  name: webapp-green
+	  labels:
+		  name: webapp-green
+	spec:
+	  containers:
+		- name: webapp-green-container
+		  image: example/webapp-color
+		  args: ["--color", "green"]
+	~                                       
+18. Create a new ConfigMap for the webapp-color POD. Use the spec given below - kubectl create configmap web-config-map --from-literal=APP_COLOR=darkblue
+19. Create a new secret - kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_USER=root --from-literal=DB_PASSWORD=password123
+20. What is the user used to execute the sleep process within the ubuntu-sleeper pod? - $ kubectl exec ubuntu-sleeper -- whoami
+21. Set the security context and run as a user 1010
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ubuntu-sleeper
+  namespace: default
+spec:
+  containers:
+    - name: ubuntu-sleeper
+      image: ubuntu
+  securityContext:
+    runAsUser: 1010
+Then do -> kubectl apply -f <above yaml file name>
+22. 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multi-pod
+spec:
+  securityContext:
+    runAsUser: 1001
+  containers:
+  -  image: ubuntu
+     name: web
+     command: ["sleep", "5000"]
+     securityContext:
+      runAsUser: 1002
+
+  -  image: ubuntu
+     name: sidecar
+     command: ["sleep", "5000"]
+
+Here is the example, now web container runs as 1002 user bcz container security context overrides the pod secruity context And sidecar container runs as a user 1001 bcz no context is set at container level, hence it will use pod level security context.
+
+23. Create a taint on node01 with key of spray, value of mortein and effect of NoSchedule -  k taint nodes node01 spray=mortein:NoSchedule
+24. Now create a pod with tolerations:
+		apiVersion: v1
+		kind: Pod
+		metadata:
+		  name: bee
+		spec:
+		  tolerations:
+			- key: "spray"
+			  value: "mortein"
+			  effect: "NoSchedule"
+			  operator: "Equal"
+		  containers:
+			- name: bee-container
+			  image: nginx
+Then, kubectl create -f pod-def.yaml
+25. Check whether the taint is present on a node or not : k describe node controlplane | grep Taint
+26. To remove the taint from the node : kubectl taint nodes controlplane node-role.kubernetes.io/control-plane:NoSchedule-
+     PS: node-role.kubernetes.io/control-plane:NoSchedule - this is taint name and NoSchedule is the effect 
+	 IMP : - at the end of the effect is required to untaint it
+27. Add a new label on the pod - kubectl label node node01 color=blue
+28. Set Node Affinity to the deployment to place the pods on node01 only.
+	a. kubectl edit deployment blue  ---- blue is the deployment name
+	file is below:
+		apiVersion: apps/v1
+		kind: Deployment
+		metadata:
+		  name: blue
+		spec:
+		  replicas: 3
+		  selector:
+			matchLabels:
+			  run: nginx
+		  template:
+			metadata:
+			  labels:
+				run: nginx
+			spec:
+			  containers:
+			  - image: nginx
+				imagePullPolicy: Always
+				name: nginx
+			  affinity:
+				nodeAffinity:
+				  requiredDuringSchedulingIgnoredDuringExecution:
+					nodeSelectorTerms:
+					- matchExpressions:
+					  - key: color
+						operator: In
+						values:
+						- blue
+	save the file.
+29. Create a new deployment named red with the nginx image and 2 replicas, and ensure it gets placed on the controlplane node only. Use the label key - node-role.kubernetes.io/control-plane - which is already set on the controlplane node.
+Name: red
+Replicas: 2
+Image: nginx
+NodeAffinity: requiredDuringSchedulingIgnoredDuringExecution
+Key: node-role.kubernetes.io/control-plane
+Use the right operator
+---> Create a file deployment-def.yaml as below:
+	
+		apiVersion: apps/v1
+		kind: Deployment
+		metadata:
+		  name: red
+		spec:
+		  replicas: 2
+		  selector:
+			matchLabels:
+			  run: nginx
+		  template:
+			metadata:
+			  labels:
+				run: nginx
+			spec:
+			  containers:
+			  - image: nginx
+				imagePullPolicy: Always
+				name: nginx
+			  affinity:
+				nodeAffinity:
+				  requiredDuringSchedulingIgnoredDuringExecution:
+					nodeSelectorTerms:
+					- matchExpressions:
+					  - key: node-role.kubernetes.io/control-plane
+						operator: Exists
+	Save the file and run below command:
+	$ kubectl create -f deployment-def.yaml
+This will create the new deployment with above given configuration added in the deployment-def.yaml file.
+30. Some references:
+	a. https://www.linkedin.com/pulse/my-ckad-exam-experience-atharva-chauthaiwale/
+	b. https://medium.com/@harioverhere/ckad-certified-kubernetes-application-developer-my-journey-3afb0901014
+	c. https://github.com/lucassha/CKAD-resources
+31. Create a multi-container pod with 2 containers.
+Use the spec given below.
+If the pod goes into the crashloopbackoff then add the command sleep 1000 in the lemon container.
+Name: yellow
+Container 1 Name: lemon
+Container 1 Image: busybox
+Container 2 Name: gold
+Container 2 Image: redis
+---> vim pod-def.yaml file:
+		
+		apiVersion: v1
+		kind: Pod
+		metadata:
+		  name: yellow
+		spec:
+		  containers:
+			- name: lemon
+			  image: busybox
+			- name: gold
+			  image: redis
+	And then run, 
+	$ kubectl create -f pod-def.yaml 
+	command
+32. To go inside the container and check the logs - k -n elastic-stack exec -it app -- cat /log/app.log
+33. Create a readiness and liveness probes:
+	
+		apiVersion: v1
+		kind: Pod
+		metadata:
+		  name: simple-webapp-2
+		  namespace: default
+		spec:
+		  containers:
+		  - name: simple-webapp-2-container
+			image: example/webapp-delayed-start
+			readinessProbe:
+			  httpGet:
+				path: /ready
+				port: 8080
+			livenessProbe:
+			  httpGet:
+				path: /ready
+				port: 8080
+			periodSeconds: 80
+			initialDelaySeconds: 80
+And then do the command - k replace -f pod-file.yaml --force         
+
+34. How many objects are in the prod environment including PODs, ReplicaSets and any other objects?
+$ k get all --selector env=prod
+NAME              READY   STATUS    RESTARTS   AGE
+pod/db-2-g5zrv    1/1     Running   0          91s
+pod/app-1-zzxdf   1/1     Running   0          90s
+pod/app-2-k4s4b   1/1     Running   0          91s
+pod/auth          1/1     Running   0          91s
+
+NAME            TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)    AGE
+service/app-1   ClusterIP   10.43.89.42   <none>        3306/TCP   90s
+
+NAME                    DESIRED   CURRENT   READY   AGE
+replicaset.apps/db-2    1         1         1       91s
+replicaset.apps/app-2   1         1         1       91s             
+
+35. Identify the POD which is part of the prod environment, the finance BU and of frontend tier?
+$ k get pod --selector env=prod,bu=finance,tier=frontend   ------------- No space after comma
+NAME          READY   STATUS    RESTARTS   AGE
+app-1-zzxdf   1/1     Running   0          3m41s
+
+36. Create a job:
+		apiVersion: batch/v1
+		kind: Job
+		metadata:
+		  name: throw-dice-job
+		spec:
+		  completions: 3
+		  parallelism: 3
+		  backoffLimit: 25
+		  template:
+			spec:
+			  containers:
+				- name: throw-dice
+				  image: example/throw-dice
+			  restartPolicy: Never
+
+37. Create a cronjob
+		apiVersion: batch/v1
+		kind: CronJob
+		metadata:
+		  name: throw-dice-cron-job
+		spec:
+		  schedule: "30 21 * * *"
+		  jobTemplate:
+			spec:
+			  completions: 3
+			  parallelism: 3
+			  backoffLimit: 25
+			  template:
+				spec:
+				  containers:
+					- name: throw-dice
+					  image: example/throw-dice
+				  restartPolicy: Never
+38. k8s reference link - https://youtu.be/rnemKrveZks and https://www.udemy.com/course/certified-kubernetes-application-developer/learn/lecture/12337386#overview
+39. Create a service:
+	apiVersion: v1
+	kind: Service
+	metadata:
+	  name: webapp-service
+	spec:
+	  type: NodePort
+	  ports:
+		- targetPort: 8080
+		  port: 8080
+		  nodePort: 30080
+	  selector:
+		name: simple-webapp
+		
+	Then, k create -f <file-name>.yaml
+40. Ingress def.yaml file
+
+		apiVersion: networking.k8s.io/v1
+		kind: Ingress
+		metadata:
+		  annotations:
+			nginx.ingress.kubernetes.io/rewrite-target: /
+			nginx.ingress.kubernetes.io/ssl-redirect: "false"
+		  creationTimestamp: "2022-11-23T06:39:55Z"
+		  generation: 3
+		  name: ingress-wear-watch
+		  namespace: app-space
+		  resourceVersion: "1490"
+		  uid: 21d41dd7-f789-4f66-9d43-6f16ab80ccf0
+		spec:
+		  rules:
+		  - http:
+			  paths:
+			  - backend:
+				  service:
+					name: wear-service
+					port:
+					  number: 8080
+				path: /wear
+				pathType: Prefix
+			  - backend:
+				  service:
+					name: video-service
+					port:
+					  number: 8080
+				path: /stream
+				pathType: Prefix
+			  - backend:
+				  service:
+					name: food-service
+					port:
+					  number: 8080
+				path: /eat
+				pathType: Prefix
+	k create -f def.yaml
+41. To know the service and port details -> k get svc -n critical-space
+42. Ingress -> You are requested to make the new application available at /pay.
+	
+	apiVersion: networking.k8s.io/v1
+	kind: Ingress
+	metadata:
+	  name: test-ingress
+	  namespace: critical-space
+	spec:
+	  rules:
+	  - http:
+		 paths:
+		 - path: /pay
+		   pathType: Prefix
+		   backend:
+			 service:
+			   name: pay-service
+			   port:
+				 number: 8282
+	
+	Get the port service name and port using above command (k get svc -n critical-space). Here, critical-space is the name of the namespace.
+43. create a service: svc-def.yaml file:
+
+		apiVersion: v1
+		kind: Service
+		metadata:
+		  name: ingress
+		  namespace: ingress-space
+		spec:
+		  type: NodePort
+		  ports:
+		  - port: 80
+			targetPort: 80
+			nodePort: 30080
+			name: http
+		  selector:
+			name: nginx-ingress
+	k create -f svc-def.yaml
+44. Create an ingress resources: in-def.yaml
+	
+	apiVersion: networking.k8s.io/v1
+	kind: Ingress
+	metadata:
+	  name: ingress-wear-watch
+	  namespace: app-space
+	spec:
+	  rules:
+	  - http:
+		  paths:
+		  - path: /wear
+			pathType: Prefix
+			backend:
+			  service:
+			   name: wear-service
+			   port:
+				number: 8080
+		  - path: /watch
+			pathType: Prefix
+			backend:
+			  service:
+			   name: video-service
+			   port:
+				number: 8080
+	then, k create -f in-def.yaml
+45. To check network policies:
+
+root@controlplane ~ ✖ k get networkpolicies
+NAME             POD-SELECTOR   AGE
+payroll-policy   name=payroll   38s
+
+root@controlplane ~ ➜  k get netpol
+NAME             POD-SELECTOR   AGE
+payroll-policy   name=payroll   43s
+
+root@controlplane ~ ➜  
+root@controlplane ~ ➜  
+
+46. Create a volume to store the logs at /var/log/webapp
+
+  file: pod-def.yaml
+	apiVersion: v1
+	kind: Pod
+	metadata:
+	  name: webapp
+	spec:
+	  containers:
+	  - name: event-simulator
+		image: example/event-simulator
+		env:
+		- name: LOG_HANDLERS
+		  value: file
+		volumeMounts:
+		- mountPath: /log
+		  name: log-volume
+
+	  volumes:
+		- name: log-volume
+		  hostPath:
+			path: /var/log/webapp
+			type: Directory
+	
+	$ k create -f pod-def.yaml
+	
+47. create a persistent volume:
+
+	apiVersion: v1
+	kind: PersistentVolume
+	metadata:
+	  name: pv-log
+	spec:
+	  persistentVolumeReclaimPolicy: Retain
+	  accessModes:
+		- ReadWriteMany
+	  capacity:
+		storage: 100Mi
+	  hostPath:
+		path: /pv/log
+		
+	$ k create -f per-vol-def.yaml
+	
+48. Create a persistent volume claim 
+
+	apiVersion: v1
+	kind: PersistentVolumeClaim
+	metadata:
+	  name: claim-log-1
+	spec:
+	  accessModes:
+		- ReadWriteOnce
+	  resources:
+		requests:
+		  storage: 50Mi
+		
+	$ k create -f per-vol-claim-def.yaml
+
+49. Update the webapp pod to use the persistent volume claim as its storage.
+
+	apiVersion: v1
+	kind: Pod
+	metadata:
+	  name: webapp
+	spec:
+	  containers:
+	  - name: event-simulator
+		image: example/event-simulator
+		env:
+		- name: LOG_HANDLERS
+		  value: file
+		volumeMounts:
+		- mountPath: /log
+		  name: log-volume
+
+	  volumes:
+		- name: log-volume
+		  persistentVolumeClaim:
+			claimName: claim-log-1
+		
+	$ k create -f pod-def.yaml
+	
+50. create a storage class:
+
+	apiVersion: storage.k8s.io/v1
+	kind: StorageClass
+	metadata:
+	  name: delayed-volume-sc
+	provisioner: kubernetes.io/no-provisioner
+	volumeBindingMode: WaitForFirstConsumer
+	
+	$ k create -f storage-class.yaml
