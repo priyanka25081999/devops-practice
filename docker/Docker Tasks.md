@@ -8,6 +8,7 @@ Run nginx on the docker and expose it to the port 8080 on localhost. Check in yo
 **Task-2:**
 
 Now run the same nginx server from previous assignment but the index.html should be replaced with the file provided (index.html)
+Find the index.html location from official nginx documentation
   
   * Screenshot is attached - https://github.com/priyanka25081999/devops-practice/blob/main/docker/nginx-webapp-ass2.png
   
